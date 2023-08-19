@@ -19,7 +19,6 @@
     <link rel="stylesheet" href="{{ asset('css/components.css') }}">
 
     <!-- Start GA -->
-    // your Google Analitycs code here
     <!-- END GA -->
 </head>
 </head>
