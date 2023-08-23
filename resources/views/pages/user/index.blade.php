@@ -25,13 +25,14 @@
                                 <h4>All Users</h4>
                             </div>
                             <div class="card-body">
-
                                 <div class="float-right">
                                     <form method="GET">
                                         <div class="input-group">
                                             <input type="text" name='search' class="form-control" placeholder="Search">
                                             <div class="input-group-append">
-                                                <button class="btn btn-primary"><i class="fa fa-search"><i></button>
+                                                <button class="btn btn-primary">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </form>
