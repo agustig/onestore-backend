@@ -20,7 +20,7 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'image_url' => $this->image_url,
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'seller' => UserResource::make($this->whenLoaded('user')),
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'created_at' => $this->whenHas('created_at'),
             'updated_at' => $this->whenHas('updated_at'),

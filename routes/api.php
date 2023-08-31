@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentCallbackController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\UploadController;
 use Illuminate\Http\Request;
@@ -31,6 +33,11 @@ Route::post('image/upload', [UploadController::class, 'uploadImage'])
     ->middleware('auth:sanctum');
 Route::post('image/multiple-upload', [UploadController::class, 'uploadMultipleImages'])
     ->middleware('auth:sanctum');
+
+Route::post('order', [OrderController::class, 'order'])
+    ->middleware('auth:sanctum');
+
+Route::post('midtrans-notification-handling', [PaymentCallbackController::class, 'callback']);
 
 Route::apiResource('categories', CategoryController::class);
 Route::apiResource('products', ProductController::class);
