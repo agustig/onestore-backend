@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class UploadController extends Controller
 {
+    use ApiHelpers;
+
     public function uploadImage(Request $request)
     {
         if ($request->has('image')) {
@@ -15,11 +18,13 @@ class UploadController extends Controller
             $nameFile = uniqid('img-') . '.' . $image->getClientOriginalExtension();
             $path = Storage::putFileAs('public/images', $image, $nameFile);
 
-            return response()->json([
-                'status' => 'upload successfully',
-                'image_path' => $path,
-                'base_url' => url('/')
-            ]);
+            return $this->onSuccess(
+                [
+                    'image_path' => $path,
+                    'base_url' => url('/')
+                ],
+                'Upload successfully'
+            );
         }
     }
 
@@ -34,11 +39,10 @@ class UploadController extends Controller
                 array_push($imagesPath, $path);
             }
 
-            return response()->json([
-                'status' => 'upload successfully',
+            return $this->onSuccess([
                 'images_path' => $imagesPath,
                 'base_url' => url('/')
-            ]);
+            ], 'Upload successfully');
         }
     }
 }

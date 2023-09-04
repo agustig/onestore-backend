@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    use ApiHelpers;
+
     public function order(Request $request)
     {
         $order = Order::create([
@@ -42,9 +45,9 @@ class OrderController extends Controller
         ]);
 
         $order->load('orderItems');
-        return response()->json([
-            'status' => 'order successfully',
-            'data' => OrderResource::make($order),
-        ]);
+        return $this->onSuccess(
+            OrderResource::make($order),
+            'Order placed'
+        );
     }
 }

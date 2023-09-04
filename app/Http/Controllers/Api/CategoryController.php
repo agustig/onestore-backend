@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
+    use ApiHelpers;
+
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->authorizeResource(Category::class, 'category');
+        $this->middleware('auth:sanctum')->except(['index', 'show']);
     }
 
     /**
@@ -21,7 +24,10 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all('id', 'name', 'description');
-        return CategoryResource::collection($categories);
+        return $this->onSuccess(
+            CategoryResource::collection($categories),
+            'Categories retrieved'
+        );
     }
 
     /**
@@ -29,14 +35,22 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $category = Category::create([
-            ...$request->validate([
-                'name' => 'required|string|max:20',
-                'description' => 'required',
-            ])
-        ]);
-
-        return CategoryResource::make($category);
+        $user = $request->user();
+        if ($this->isAdmin($user) || $this->isSuperAdmin($user)) {
+            $validator = Validator::make(
+                $request->all(),
+                $this->categoryValidationRules()
+            );
+            if ($validator->passes()) {
+                $category = Category::create($request->all());
+                return $this->onSuccess(
+                    CategoryResource::make($category),
+                    'Category created',
+                );
+            }
+            return $this->onError(400, $validator->errors());
+        }
+        return $this->onError(401, $user->role);
     }
 
     /**
@@ -45,7 +59,10 @@ class CategoryController extends Controller
     public function show(Category $category)
     {
         $category->load('products');
-        return CategoryResource::make($category);
+        return $this->onSuccess(
+            CategoryResource::make($category),
+            'Category retrieved'
+        );
     }
 
     /**
@@ -53,23 +70,35 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $category->update([
-            ...$request->validate([
-                'name' => 'required|string|max:20',
-                'description' => 'required',
-            ])
-        ]);
-
-        return CategoryResource::make($category);
+        $user = $request->user();
+        if ($this->isAdmin($user) || $this->isSuperAdmin($user)) {
+            $validator = Validator::make(
+                $request->all(),
+                $this->categoryValidationRules()
+            );
+            if ($validator->passes()) {
+                $category->update($request->all());
+                return $this->onSuccess(
+                    CategoryResource::make($category),
+                    'Category updated',
+                );
+            }
+            return $this->onError(400, $validator->errors());
+        }
+        return $this->onError(401, 'Unauthorized access');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
+    public function destroy(Request $request, Category $category)
     {
-        $category->delete();
 
-        return response(status: 204);
+        $user = $request->user();
+        if ($this->isAdmin($user) || $this->isSuperAdmin($user)) {
+            $category->delete();
+            return $this->onSuccess(null, 'Category deleted');
+        }
+        return $this->onError(401, 'Unauthorized access');
     }
 }

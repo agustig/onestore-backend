@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
+    use ApiHelpers;
+
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->authorizeResource(Product::class, 'product');
+        $this->middleware('auth:sanctum')->except(['index', 'show']);
     }
 
     /**
@@ -20,13 +23,16 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return ProductResource::collection(Product::select(
-            'id',
-            'name',
-            'description',
-            'price',
-            'image_url',
-        )->paginate(10));
+        return $this->onSuccess(
+            ProductResource::collection(Product::select(
+                'id',
+                'name',
+                'description',
+                'price',
+                'image_url',
+            )->paginate(10),),
+            'Products retrieved',
+        );
     }
 
     /**
@@ -34,18 +40,18 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $product = Product::create([
-            ...$request->validate([
-                'name' => 'required|string|max:100',
-                'description' => 'required|string',
-                'price' => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
-                'image_url' => 'required',
-                'category_id' => 'required',
-            ]),
-            'user_id' => 1,
-        ]);
-
-        return ProductResource::make($product);
+        $validator = Validator::make(
+            $request->all(),
+            $this->productValidationRules()
+        );
+        if ($validator->passes()) {
+            $product = Product::create([
+                ...$request->all(),
+                'user_id' => $request->user()->id
+            ]);
+            return $this->onSuccess($product, 'Product created');
+        }
+        return $this->onError(400, $validator->errors());
     }
 
     /**
@@ -53,8 +59,11 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $product->load('category', 'seller');
-        return ProductResource::make($product);
+        $product->load('category', 'user');
+        return $this->onSuccess(
+            ProductResource::make($product),
+            'Product retrieved',
+        );
     }
 
     /**
@@ -62,25 +71,44 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        $product->update([
-            ...$request->validate([
-                'name' => 'required|string|max:100',
-                'description' => 'required|string',
-                'price' => 'required|regex:/^[0-9]+(\.[0-9][0-9]?)?$/',
-                'image_url' => 'required',
-                'category_id' => 'required',
-            ])
-        ]);
-
-        return ProductResource::make($product);
+        $requestUser = $request->user();
+        $productUserId = $product->user_id;
+        if (
+            $requestUser->id == $productUserId ||
+            $this->isAdmin($requestUser) ||
+            $this->isSuperAdmin($requestUser)
+        ) {
+            $validator = Validator::make(
+                $request->all(),
+                $this->productValidationRules()
+            );
+            if ($validator->passes()) {
+                $product->update($request->all());
+                return $this->onSuccess(
+                    ProductResource::make($product),
+                    'Product updated'
+                );
+            }
+            return $this->onError(400, $validator->errors());
+        }
+        return $this->onError(401, 'Unauthorized access');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Product $product)
+    public function destroy(Request $request, Product $product)
     {
-        $product->delete();
-        return response(status: 204);
+        $requestUser = $request->user();
+        $productUserId = $product->user_id;
+        if (
+            $requestUser->id == $productUserId ||
+            $this->isAdmin($requestUser) ||
+            $this->isSuperAdmin($requestUser)
+        ) {
+            $product->delete();
+            return $this->onSuccess(null, 'Product deleted');
+        }
+        return $this->onError(401, 'Unauthorized access');
     }
 }

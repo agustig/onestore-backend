@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use App\Models\Order;
 use App\Services\Midtrans\CallbackService;
 
 class PaymentCallbackController extends Controller
 {
+    use ApiHelpers;
+
     public function callback()
     {
         $callback = new CallbackService;
@@ -34,16 +37,9 @@ class PaymentCallbackController extends Controller
             if ($callback->isFailure()) {
                 Order::where('id', $order->id)->update(['payment_status' => 5]);
             }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Notification is processed',
-            ]);
+            return $this->onSuccess(null, 'Notification is processed');
         } else {
-            return response()->json([
-                'error' => true,
-                'message' => 'Unsigned signature key',
-            ], 403);
+            return $this->onError(403, 'Unsigned signature key');
         }
     }
 }

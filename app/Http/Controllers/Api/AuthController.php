@@ -3,71 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Library\ApiHelpers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    use ApiHelpers;
+
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required',
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            $this->userSignValidatedRules()
+        );
 
-        $user = User::where('email', $request->email)->first();
+        if ($validator->passes()) {
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
-            throw ValidationException::withMessages([
-                'email' => 'email incorrect'
-            ]);
+            if (!$user) {
+                return $this->onError(
+                    401,
+                    ['email' => ['email incorrect.']]
+                );
+            }
+
+            if (!Hash::check($request->password, $user->password)) {
+                return $this->onError(
+                    401,
+                    ['password' => ['password incorrect']]
+                );
+            }
+            $authToken = $user->createToken('auth-token')->plainTextToken;
+            $userData = User::find($user->id, ['id', 'name']);
+
+            $credentials = [
+                'auth_token' => $authToken,
+                'user' => UserResource::make($userData),
+            ];
+
+            return $this->onSuccess($credentials, 'Login successfully',);
         }
-
-        if (!Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'password' => 'password incorrect'
-            ]);
-        }
-
-        $authToken = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'auth_token' => $authToken,
-            'user' => UserResource::make($user),
-        ]);
+        return $this->onError(400, $validator->errors());
     }
 
     public function register(Request $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required',
-            'name' => 'required',
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            $this->userRegisterValidatedRules()
+        );
 
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'name' => $request->name,
-            'role' =>  'user',
-        ]);
+        if ($validator->passes()) {
+            $user = User::create([
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'name' => $request->name,
+                'role' =>  'user',
+            ]);
 
-        $authToken = $user->createToken('auth-token')->plainTextToken;
+            $authToken = $user->createToken('auth-token')->plainTextToken;
+            $userData = User::find($user->id, ['id', 'name']);
 
-        return response()->json([
-            'auth_token' => $authToken,
-            'user' => UserResource::make($user),
-        ]);
+            $credentials = [
+                'auth_token' => $authToken,
+                'user' => UserResource::make($userData),
+            ];
+
+            return $this->onSuccess($credentials, 'Register successfully');
+        }
+        return $this->onError(400, $validator->errors());
     }
 
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
-        return response()->json([
-            'message' => 'Logout successfully'
-        ]);
+        return $this->onSuccess(null, 'Logout successfully');
     }
 }
