@@ -26,14 +26,14 @@ class AuthController extends Controller
 
             if (!$user) {
                 return $this->onError(
-                    401,
+                    422,
                     ['email' => ['email incorrect.']]
                 );
             }
 
             if (!Hash::check($request->password, $user->password)) {
                 return $this->onError(
-                    401,
+                    422,
                     ['password' => ['password incorrect']]
                 );
             }
