@@ -24,6 +24,16 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all('id', 'name', 'description');
+        $categoriesPageCount = $categories->count() / 10;
+
+        if ($categoriesPageCount > 1) {
+            return $this->onSuccess(
+                CategoryResource::collection($categories->paginate(10)),
+                'Categories retrieved',
+                $categoriesPageCount,
+            );
+        }
+
         return $this->onSuccess(
             CategoryResource::collection($categories),
             'Categories retrieved'

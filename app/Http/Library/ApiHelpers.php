@@ -24,13 +24,16 @@ trait ApiHelpers
         return false;
     }
 
-    protected function onSuccess($data, string $message = '', int $code = 200): JsonResponse
+    protected function onSuccess($data, string $message = '', int $total_page = null, int $code = 200): JsonResponse
     {
         $responseField = [
             'status' => $code,
             'message' => $message,
         ];
         if (!empty($data)) {
+            if (!empty($total_page)) {
+                $responseField = [...$responseField, 'data' => $data, 'total_page' => $total_page];
+            }
             $responseField = [...$responseField, 'data' => $data];
         }
         return response()->json($responseField, $code);

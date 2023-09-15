@@ -23,14 +23,27 @@ class ProductController extends Controller
      */
     public function index()
     {
+        $products = Product::select(
+            'id',
+            'name',
+            'description',
+            'price',
+            'image_url',
+        );
+        $productsPageCount = $products->count() / 10;
+
+
+
+        if ($productsPageCount > 1) {
+            return $this->onSuccess(
+                ProductResource::collection($products->paginate(10),),
+                'Products retrieved',
+                $productsPageCount,
+            );
+        }
+
         return $this->onSuccess(
-            ProductResource::collection(Product::select(
-                'id',
-                'name',
-                'description',
-                'price',
-                'image_url',
-            )->paginate(10),),
+            ProductResource::collection($products->paginate(10),),
             'Products retrieved',
         );
     }
