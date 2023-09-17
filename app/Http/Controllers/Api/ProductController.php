@@ -21,18 +21,21 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::select(
+        $categoryId = $request->input('category-id');
+        $products = Product::when(
+            $categoryId,
+            fn ($query, $categoryId) => $query->categoryId($categoryId),
+        )->select(
             'id',
             'name',
             'description',
             'price',
             'image_url',
         );
+
         $productsPageCount = $products->count() / 10;
-
-
 
         if ($productsPageCount > 1) {
             return $this->onSuccess(
