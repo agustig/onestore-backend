@@ -24,16 +24,16 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $categoryId = $request->input('category-id');
-        $products = Product::when(
-            $categoryId,
-            fn ($query, $categoryId) => $query->categoryId($categoryId),
-        )->select(
-            'id',
-            'name',
-            'description',
-            'price',
-            'image_url',
-        );
+        $userId = $request->input('user-id');
+        $products = Product::where('category_id', 'LIKE',  $categoryId)
+            ->where('user_id', 'LIKE', $userId)
+            ->select(
+                'id',
+                'name',
+                'description',
+                'price',
+                'image_url',
+            );
 
         $productsPageCount = $products->count() / 10;
 

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,10 +26,5 @@ class Product extends Model
     public function user()
     {
         return $this->belongsTo(User::class)->select('id', 'name');
-    }
-
-    public function scopeCategoryId(Builder $query, int $categoryId): Builder
-    {
-        return $query->where('category_id', 'LIKE', $categoryId);
     }
 }
