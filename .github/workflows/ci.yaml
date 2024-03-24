@@ -50,6 +50,12 @@ jobs:
           extensions: sqlite, pdo_sqlite, pcntl, zip, intl, exif, mbstring, dom, fileinfo, mysql
           coverage: xdebug
 
+      - name: Create .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');  echo file_get_contents('.env');"
+
+      - name: Start MySQL Service
+        run: sudo /etc/init.d/mysql start
+
       - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
@@ -66,10 +72,8 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
-      - name: Prepare Laravel Application
-        run: |
-          php -r "file_exists('.env') || copy('.env.example', '.env');"
-          php artisan key:generate
+      - name: Generate Applications Key
+        run: php artisan key:generate
 
       - name: Clear Config
         run: php artisan config:clear
