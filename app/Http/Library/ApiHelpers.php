@@ -15,15 +15,6 @@ trait ApiHelpers
         return false;
     }
 
-    protected function isSuperAdmin($user): bool
-    {
-        if (!empty($user)) {
-            return $user->role == 'super_admin';
-        }
-
-        return false;
-    }
-
     protected function onSuccess($data, string $message = '', int $total_page = null, int $code = 200): JsonResponse
     {
         $responseField = [

@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Gate;
 class AuthServiceProvider extends ServiceProvider
 {
     public static $permissions = [
-        'dashboard' => ['super_admin', 'admin'],
+        'dashboard' => ['admin'],
         'user-index' => ['admin'],
-        'payment-update' => ['super_admin']
+        'payment-update' => ['admin']
     ];
     /**
      * The model to policy mappings for the application.
