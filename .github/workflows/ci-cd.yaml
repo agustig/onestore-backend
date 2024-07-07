@@ -19,8 +19,8 @@ jobs:
       QUEUE_CONNECTION: redis
       SESSION_DRIVER: redis
     services:
-      mariadb:
-        image: mariadb:10.11
+      mysql:
+        image: mysql:8.0
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: false
           MYSQL_ROOT_PASSWORD: password
